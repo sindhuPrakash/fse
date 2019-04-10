@@ -1,21 +1,36 @@
 import java.io.Serializable;
 import java.util.Set;
 
-public class Subject implements Serializable{
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
+import javax.persistence.UniqueConstraint;
+
+@Entity
+@Table(name = "Subject", uniqueConstraints = { @UniqueConstraint(columnNames = "subjectId") })
+public class Subject implements Serializable {
 
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -9001386160170483564L;
-	
+
+	@Id
+	@Column(name = "subjectId", unique = true, nullable = false)
 	private long subjectId;
-	
+
+	@Column(name = "subtitle")
 	private String subtitle;
-	
+
+	@Column(name = "durationInHours")
 	private int durationInHours;
-	
+
+	@OneToMany(fetch = FetchType.LAZY, mappedBy = "Subject")
 	private Set<Book> references;
-	
+
 	public Subject() {
 		super();
 	}
@@ -64,7 +79,9 @@ public class Subject implements Serializable{
 	public String toString() {
 		String books = this.getBooks();
 		StringBuilder builder = new StringBuilder();
-		builder.append("\nSubject:\n").append("subjectId: "+subjectId).append("\n").append("Subject Title: "+subtitle).append("\n").append("Subject Duration In Hours: "+durationInHours);
+		builder.append("\nSubject:\n").append("subjectId: " + subjectId).append("\n")
+				.append("Subject Title: " + subtitle).append("\n")
+				.append("Subject Duration In Hours: " + durationInHours);
 		builder.append("\n").append("References: \n").append(books);
 		return builder.toString();
 	}
@@ -72,14 +89,14 @@ public class Subject implements Serializable{
 	private String getBooks() {
 		StringBuilder builder = new StringBuilder();
 		builder.append("Books:").append("\n");
-		references.forEach(book ->{
-			builder.append("Book Id: "+book.getBookId()).append("\n");
-			builder.append("Book Title: "+book.getTitle()).append("\n");
-			builder.append("Book Volume: "+book.getVolume()).append("\n");
-			builder.append("Book Published Date: "+book.getPublishDate()).append("\n");
-			builder.append("Book Price: "+book.getPrice()).append("\n");
+		references.forEach(book -> {
+			builder.append("Book Id: " + book.getBookId()).append("\n");
+			builder.append("Book Title: " + book.getTitle()).append("\n");
+			builder.append("Book Volume: " + book.getVolume()).append("\n");
+			builder.append("Book Published Date: " + book.getPublishDate()).append("\n");
+			builder.append("Book Price: " + book.getPrice()).append("\n");
 		});
 		return builder.toString();
 	}
-	
+
 }
