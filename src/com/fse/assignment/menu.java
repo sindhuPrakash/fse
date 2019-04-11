@@ -1,10 +1,16 @@
+package com.fse.assignment;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Scanner;
+import java.util.Set;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
@@ -12,10 +18,12 @@ import org.hibernate.Transaction;
 public class menu {
 
 	private static Scanner scanner = new Scanner(System.in);
-	/*private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver";
-	private static final String DB_URL = "jdbc:mysql://localhost:3306/library";*/
+	/*
+	 * private static final String JDBC_DRIVER = "com.mysql.jdbc.Driver"; private
+	 * static final String DB_URL = "jdbc:mysql://localhost:3306/library";
+	 */
 
-	public static void main(String[] args) throws ClassNotFoundException {
+	public static void main(String[] args) throws ClassNotFoundException, ParseException {
 		boolean exitstatus = false;
 		while (!exitstatus) {
 			System.out.println(
@@ -96,8 +104,8 @@ public class menu {
 		case "2": {
 			System.out.println("Enter the subject Title");
 			String subjectName = scanner.nextLine();
-			//List<Subject> filteredSubject = searchSubjectWithSubjectTitle(subjectName);
-			//filteredSubject.forEach(subject -> System.out.println(subject.toString()));
+			// List<Subject> filteredSubject = searchSubjectWithSubjectTitle(subjectName);
+			// filteredSubject.forEach(subject -> System.out.println(subject.toString()));
 			break;
 		}
 		default:
@@ -112,15 +120,15 @@ public class menu {
 		case "1": {
 			System.out.println("Enter Book Id:");
 			long bookId = Long.parseLong(scanner.nextLine());
-			//Book filteredBook = getBook(bookId);
-			//System.out.println(filteredBook.toString());
+			// Book filteredBook = getBook(bookId);
+			// System.out.println(filteredBook.toString());
 			break;
 		}
 		case "2": {
 			System.out.println("Enter Book Title:");
 			String bookTitle = scanner.nextLine();
-			//List<Book> filteredBooks = searchBookWithBookTitle(bookTitle);
-			//filteredBooks.forEach(book -> System.out.println(book.toString()));
+			// List<Book> filteredBooks = searchBookWithBookTitle(bookTitle);
+			// filteredBooks.forEach(book -> System.out.println(book.toString()));
 			break;
 		}
 
@@ -153,7 +161,7 @@ public class menu {
 		Session session;
 		Transaction transaction = null;
 		try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();) {
-			session = sessionFactory.getCurrentSession();
+			session = sessionFactory.openSession();
 			transaction = session.beginTransaction();
 			transaction.begin();
 			session.delete(getBook(bookId));
@@ -171,7 +179,7 @@ public class menu {
 	private static Object getBook(long bookId) {
 		Book book = null;
 		try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();) {
-			Session session = sessionFactory.getCurrentSession();
+			Session session = sessionFactory.openSession();
 			book = session.load(Book.class, bookId);
 		} catch (Exception e) {
 			System.out.println("Exception occurred while saving subject to DB: " + e.getMessage());
@@ -202,7 +210,7 @@ public class menu {
 		Session session;
 		Transaction transaction = null;
 		try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();) {
-			session = sessionFactory.getCurrentSession();
+			session = sessionFactory.openSession();
 			transaction = session.beginTransaction();
 			transaction.begin();
 			session.delete(getSubject(subjectId));
@@ -217,7 +225,7 @@ public class menu {
 		return status;
 	}
 
-	private static void addSubject() throws ClassNotFoundException {
+	private static void addSubject() throws ClassNotFoundException, ParseException {
 		try {
 			System.out.println("Enter subject title");
 			String subjectName = scanner.nextLine();
@@ -237,12 +245,14 @@ public class menu {
 				int volume = Integer.parseInt(scanner.nextLine());
 				System.out.println("Enter book publish date in MM/dd/yyyy format");
 				String date = scanner.nextLine();
-				LocalDate bookPublishDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("MM/dd/yyyy"));
-				Subject subject = new Subject(subjectId, subjectName, duration, new HashSet<>());
-				Book book = new Book(bookId, bookName, price, volume, bookPublishDate);
+				Date bookPublishDate = new SimpleDateFormat("MM/dd/yyyy").parse(date);
+				Subject subject = new Subject(subjectName, duration, new HashSet<>());
+				Book book = new Book(bookName, price, volume, bookPublishDate);
 				book.setSubject(subject);
-				subject.getReferences().add(book);
-				System.out.println(saveSubjectToDB(subject) ? "Book Added to Subject Successfully"
+				Set<Book> books = new HashSet<>();
+				books.add(book);
+				subject.setReferences(books);
+				System.out.println(saveSubjectToDB(subject,books) ? "Book Added to Subject Successfully"
 						: "failed to add book to subject");
 			}
 		} catch (NumberFormatException e1) {
@@ -250,23 +260,26 @@ public class menu {
 		}
 	}
 
-	private static boolean saveSubjectToDB(Subject subject) {
-		Session session = HibernateUtil.getSessionFactory().getCurrentSession();
+	private static boolean saveSubjectToDB(Subject subject, Set<Book> books) {
+		Session session = HibernateUtil.getSessionFactory().openSession();
 		Transaction transaction = session.beginTransaction();
 		boolean status = false;
 		try {
-			transaction.begin();
 			session.save(subject);
+			if (CollectionUtils.isEmpty(books)) {
+				books.stream().forEach(book -> session.save(book));
+			}
 			transaction.commit();
 			status = true;
 		} catch (Exception e) {
 			System.out.println("Exception occurred while saving subject");
+			e.printStackTrace();
 			transaction.rollback();
 		}
 		return status;
 	}
 
-	private static void addBook() {
+	private static void addBook() throws ParseException {
 		try {
 			System.out.println("Enter the subject Id of the book");
 			long subjectId = Long.parseLong(scanner.nextLine());
@@ -282,8 +295,8 @@ public class menu {
 				int volume = Integer.parseInt(scanner.nextLine());
 				System.out.println("Enter book publish date in MM/dd/yyyy format");
 				String date = scanner.nextLine();
-				LocalDate bookPublishDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("MM/dd/yyyy"));
-				Book book = new Book(bookId, bookName, price, volume, bookPublishDate);
+				Date bookPublishDate = new SimpleDateFormat("MM/dd/yyyy").parse(date);
+				Book book = new Book(bookName, price, volume, bookPublishDate);
 				book.setSubject(subject);
 				addBookToSubject(book);
 			} else {
@@ -298,7 +311,7 @@ public class menu {
 		Session session;
 		Transaction transaction = null;
 		try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory()) {
-			session = sessionFactory.getCurrentSession();
+			session = sessionFactory.openSession();
 			transaction = session.beginTransaction();
 			transaction.begin();
 			session.save(book);
@@ -312,7 +325,7 @@ public class menu {
 	private static Subject getSubject(long subjectId) {
 		Subject subject = null;
 		try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();) {
-			Session session = sessionFactory.getCurrentSession();
+			Session session = sessionFactory.openSession();
 			subject = session.load(Subject.class, subjectId);
 		} catch (Exception e) {
 			System.out.println("Exception occurred while saving subject to DB: " + e.getMessage());
@@ -324,7 +337,7 @@ public class menu {
 		Session session;
 		List<Book> books = new ArrayList<>();
 		try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory()) {
-			session = sessionFactory.getCurrentSession();
+			session = sessionFactory.openSession();
 			books = session.createQuery("FROM Book").list();
 		} catch (Exception e) {
 			System.out.println("Exception occurred while reading books");
@@ -336,7 +349,7 @@ public class menu {
 		Session session;
 		List<Subject> subjects = new ArrayList<>();
 		try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory()) {
-			session = sessionFactory.getCurrentSession();
+			session = sessionFactory.openSession();
 			subjects = session.createQuery("FROM Subject").list();
 		} catch (Exception e) {
 			System.out.println("Exception occurred while reading books");

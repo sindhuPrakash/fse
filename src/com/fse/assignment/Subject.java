@@ -1,16 +1,15 @@
+package com.fse.assignment;
+
 import java.io.Serializable;
 import java.util.Set;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.Id;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-@Entity
-@Table(name = "Subject", uniqueConstraints = { @UniqueConstraint(columnNames = "subjectId") })
 public class Subject implements Serializable {
 
 	/**
@@ -18,26 +17,20 @@ public class Subject implements Serializable {
 	 */
 	private static final long serialVersionUID = -9001386160170483564L;
 
-	@Id
-	@Column(name = "subjectId", unique = true, nullable = false)
 	private long subjectId;
 
-	@Column(name = "subtitle")
 	private String subtitle;
 
-	@Column(name = "durationInHours")
 	private int durationInHours;
 
-	@OneToMany(fetch = FetchType.LAZY, mappedBy = "Subject")
 	private Set<Book> references;
 
 	public Subject() {
 		super();
 	}
 
-	public Subject(long subjectId, String subtitle, int durationInHours, Set<Book> references) {
+	public Subject(String subtitle, int durationInHours, Set<Book> references) {
 		super();
-		this.subjectId = subjectId;
 		this.subtitle = subtitle;
 		this.durationInHours = durationInHours;
 		this.references = references;

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN"
+	"http://hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping package="com.fse.assignment">
+	<class name="Subject" table="Subject">
+		<id name="subjectId" type="long">
+			<column name="subjectId" />
+			<generator class="identity" />
+		</id>
+		<property name="durationInHours" type="int">
+			<column name="durationInHours" />
+		</property>
+		<property name="subtitle" type="string">
+			<column name="subtitle" />
+		</property>
+		<set name="references" cascade="all" table="Book" fetch="select">
+			<key>
+				<column name="subjectId" not-null="true"></column>
+			</key>
+			<one-to-many class="Book" />
+		</set>
+	</class>
+
+</hibernate-mapping>

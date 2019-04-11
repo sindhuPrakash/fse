@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC "-//Hibernate/Hibernate Mapping DTD 3.0//EN" 
+"http://hibernate.org/dtd/hibernate-mapping-3.0.dtd" >
+
+<hibernate-mapping package="com.fse.assignment">
+
+	<class name="Book" table="Book">
+		<id name="bookId" type="long">
+			<column name="bookId" />
+			<generator class="identity" />
+		</id>
+		<property name="title" type="string">
+			<column name="title"></column>
+		</property>
+		<property name="price" type="double">
+			<column name="price"></column>
+		</property>
+		<property name="volume" type="integer">
+			<column name="volume"></column>
+		</property>
+		<property name="publishDate" type="date">
+			<column name="publishDate"></column>
+		</property>
+
+		<many-to-one name="Subject" class="Subject">
+			<column name="subjectId" not-null="true"></column>
+		</many-to-one>
+	</class>
+
+</hibernate-mapping>
