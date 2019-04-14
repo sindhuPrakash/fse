@@ -1,4 +1,5 @@
 package com.fse.assignment;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
@@ -14,6 +15,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
+import org.hibernate.criterion.Restrictions;
 
 public class menu {
 
@@ -120,15 +122,14 @@ public class menu {
 		case "1": {
 			System.out.println("Enter Book Id:");
 			long bookId = Long.parseLong(scanner.nextLine());
-			// Book filteredBook = getBook(bookId);
-			// System.out.println(filteredBook.toString());
+			System.out.println(getBook(bookId).toString());
 			break;
 		}
 		case "2": {
 			System.out.println("Enter Book Title:");
 			String bookTitle = scanner.nextLine();
-			// List<Book> filteredBooks = searchBookWithBookTitle(bookTitle);
-			// filteredBooks.forEach(book -> System.out.println(book.toString()));
+			List<Book> filteredBooks = searchBookWithBookTitle(bookTitle);
+			filteredBooks.forEach(book -> System.out.println(book.toString()));
 			break;
 		}
 
@@ -136,6 +137,17 @@ public class menu {
 			System.out.println("Invalid selection");
 			break;
 		}
+	}
+
+	private static List<Book> searchBookWithBookTitle(String bookTitle) {
+		Session session = HibernateUtil.getSessionFactory().openSession();
+		List<Book> books = null;
+		try {
+			books = (List<Book>) session.createQuery("FROM Book b where b.title like "+bookTitle+"%s").list();
+		} catch (Exception e) {
+			System.out.println("Excpetion occurred while reading books with title: " + bookTitle);
+		}
+		return books;
 	}
 
 	private static void deleteBook() {
@@ -178,7 +190,8 @@ public class menu {
 
 	private static Object getBook(long bookId) {
 		Book book = null;
-		try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();) {
+		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+		try {
 			Session session = sessionFactory.openSession();
 			book = session.load(Book.class, bookId);
 		} catch (Exception e) {
@@ -229,16 +242,12 @@ public class menu {
 		try {
 			System.out.println("Enter subject title");
 			String subjectName = scanner.nextLine();
-			System.out.println("Enter subject Id");
-			long subjectId = Long.parseLong(scanner.nextLine());
 			System.out.println("Enter Duration");
 			int duration = Integer.parseInt(scanner.nextLine());
 			System.out.println("Do you want to add Book? Y/N");
 			if (scanner.nextLine().equalsIgnoreCase("Y")) {
 				System.out.println("Enter book title");
 				String bookName = scanner.nextLine();
-				System.out.println("Enter book Id");
-				long bookId = Long.parseLong(scanner.nextLine());
 				System.out.println("Enter book price");
 				double price = Double.parseDouble(scanner.nextLine());
 				System.out.println("Enter book volume");
@@ -252,8 +261,12 @@ public class menu {
 				Set<Book> books = new HashSet<>();
 				books.add(book);
 				subject.setReferences(books);
-				System.out.println(saveSubjectToDB(subject,books) ? "Book Added to Subject Successfully"
-						: "failed to add book to subject");
+				System.out.println(saveSubjectToDB(subject, books) ? "Subject and Book Added to Subject Successfully"
+						: "failed to add book and subject");
+			} else {
+				Subject subject = new Subject(subjectName, duration, new HashSet<>());
+				System.out.println(
+						saveSubjectToDB(subject, null) ? "Subject added successfully" : "Failed to add subject");
 			}
 		} catch (NumberFormatException e1) {
 			System.out.println("Failed to add subject Try Again");
@@ -287,8 +300,6 @@ public class menu {
 			if (subject != null) {
 				System.out.println("Enter book title");
 				String bookName = scanner.nextLine();
-				System.out.println("Enter book Id");
-				long bookId = Long.parseLong(scanner.nextLine());
 				System.out.println("Enter book price");
 				double price = Double.parseDouble(scanner.nextLine());
 				System.out.println("Enter book volume");
@@ -308,12 +319,9 @@ public class menu {
 	}
 
 	private static void addBookToSubject(Book book) {
-		Session session;
-		Transaction transaction = null;
-		try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory()) {
-			session = sessionFactory.openSession();
-			transaction = session.beginTransaction();
-			transaction.begin();
+		Session session = HibernateUtil.getSessionFactory().openSession();
+		Transaction transaction = session.beginTransaction();
+		try {
 			session.save(book);
 			transaction.commit();
 		} catch (Exception e) {
@@ -324,7 +332,8 @@ public class menu {
 
 	private static Subject getSubject(long subjectId) {
 		Subject subject = null;
-		try (SessionFactory sessionFactory = HibernateUtil.getSessionFactory();) {
+		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+		try {
 			Session session = sessionFactory.openSession();
 			subject = session.load(Subject.class, subjectId);
 		} catch (Exception e) {
